@@ -1,0 +1,27 @@
+{
+  "source": "precomputed-nova-lite-demo",
+  "synthetic": true,
+  "model": "amazon.nova-lite-v1:0",
+  "region": "ap-northeast-1",
+  "generated_on": "2026-11-11",
+  "warning": "架空の3件のサンプルデータに対する事前生成結果です。アップロードCSVの分析結果ではありません。",
+  "themes": [
+    {
+      "theme": "業務手順の違い",
+      "response_ids": ["R001"],
+      "summary": "部署ごとの業務手順の違いによる混乱"
+    },
+    {
+      "theme": "相談相手の不足",
+      "response_ids": ["R002"],
+      "summary": "繁忙期に相談相手が見つからない"
+    },
+    {
+      "theme": "情報共有の効果",
+      "response_ids": ["R003"],
+      "summary": "週次ミーティングによる情報共有の効果"
+    }
+  ],
+  "overall": "業務手順の違いと相談相手の不足が課題、情報共有は効果的",
+  "limitations": "3件の架空データであるため一般化不可"
+}
