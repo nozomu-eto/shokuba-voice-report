@@ -67,3 +67,31 @@ test("a failed latest read replaces the loading state with actionable errors", (
     { status: "error", requestId: 4, errors: [{ code: "too_large", message: "2 MiBを超えています" }] },
   );
 });
+
+test("a failed read clears the previous summary and sample analysis", () => {
+  const completed = surveyWorkflowReducer(
+    surveyWorkflowReducer(INITIAL_SURVEY_WORKFLOW_STATE, {
+      type: "begin",
+      requestId: 1,
+      source: "bundled-sample",
+    }),
+    { type: "success", requestId: 1, responses: [...BUNDLED_SAMPLE_RESPONSES] },
+  );
+  const loading = surveyWorkflowReducer(completed, {
+    type: "begin",
+    requestId: 2,
+    source: "user-upload",
+  });
+  assert.deepEqual(loading, { status: "loading", requestId: 2, source: "user-upload" });
+
+  const failed = surveyWorkflowReducer(loading, {
+    type: "failure",
+    requestId: 2,
+    errors: [{ code: "malformed", message: "CSVを確認してください" }],
+  });
+  assert.deepEqual(failed, {
+    status: "error",
+    requestId: 2,
+    errors: [{ code: "malformed", message: "CSVを確認してください" }],
+  });
+});
