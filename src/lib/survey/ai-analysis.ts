@@ -1,4 +1,5 @@
 import type { SurveyResponse } from "./types.ts";
+import { BUNDLED_SAMPLE_RESPONSES } from "./sample.ts";
 
 export const SAMPLE_AI_LABEL = "サンプルAI分析（事前生成・デモ用）";
 export const UPLOADED_AI_UNAVAILABLE_MESSAGE =
@@ -35,6 +36,28 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 
 function isNonEmptyString(value: unknown): value is string {
   return typeof value === "string" && value.trim().length > 0;
+}
+
+function responsesMatchBundledSample(responses: readonly SurveyResponse[]): boolean {
+  if (responses.length !== BUNDLED_SAMPLE_RESPONSES.length) return false;
+
+  const actualById = new Map<string, SurveyResponse>();
+  for (const response of responses) {
+    if (actualById.has(response.responseId)) return false;
+    actualById.set(response.responseId, response);
+  }
+
+  return BUNDLED_SAMPLE_RESPONSES.every((expected) => {
+    const actual = actualById.get(expected.responseId);
+    return (
+      actual !== undefined &&
+      actual.workEnvironment === expected.workEnvironment &&
+      actual.easeOfConsultation === expected.easeOfConsultation &&
+      actual.informationSharing === expected.informationSharing &&
+      actual.intentionToStay === expected.intentionToStay &&
+      actual.comment === expected.comment
+    );
+  });
 }
 
 /**
@@ -118,7 +141,11 @@ export function validateMockAiAnalysis(
   };
 }
 
-/** Only an explicitly tagged bundled-sample load may use the static fixture. */
+/**
+ * Only data explicitly tagged as the bundled sample and matching its canonical
+ * contents may use the static fixture. Callers must set `bundled-sample` only
+ * for the app's bundled sample action; equality alone does not prove provenance.
+ */
 export function getMockAiAvailability(
   source: SurveyDataSource,
   fixture: unknown,
@@ -126,6 +153,12 @@ export function getMockAiAvailability(
 ): MockAiAvailability {
   if (source.kind !== "bundled-sample") {
     return { available: false, message: UPLOADED_AI_UNAVAILABLE_MESSAGE };
+  }
+  if (!responsesMatchBundledSample(responses)) {
+    return {
+      available: false,
+      message: "サンプルAI分析は同梱サンプルの回答データにのみ利用できます。回答内容を確認してください。",
+    };
   }
   const validated = validateMockAiAnalysis(fixture, responses);
   if (!validated.success) {

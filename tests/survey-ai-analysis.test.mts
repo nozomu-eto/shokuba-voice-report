@@ -8,6 +8,7 @@ import {
   validateMockAiAnalysis,
 } from "../src/lib/survey/ai-analysis.ts";
 import { parseSurveyCsv } from "../src/lib/survey/csv.ts";
+import { BUNDLED_SAMPLE_RESPONSES } from "../src/lib/survey/sample.ts";
 import type { SurveyResponse } from "../src/lib/survey/types.ts";
 
 const sampleCsv = await readFile(new URL("../fixtures/employee-survey-sample.csv", import.meta.url), "utf8");
@@ -99,6 +100,55 @@ test("同梱サンプル由来では検証済みの分析を利用できる", ()
   const result = getMockAiAvailability({ kind: "bundled-sample" }, fixture, sampleResponses());
   assert.equal(result.available, true);
   if (result.available) assert.equal(result.analysis.themes.length, 3);
+});
+
+test("正規データ定数は同梱CSVを既存パーサーで読んだ結果と一致する", () => {
+  assert.deepEqual(BUNDLED_SAMPLE_RESPONSES, sampleResponses());
+});
+
+test("回答の並び順が異なっても同じサンプル内容ならAIを利用できる", () => {
+  const result = getMockAiAvailability(
+    { kind: "bundled-sample" },
+    fixture,
+    sampleResponses().toReversed(),
+  );
+  assert.equal(result.available, true);
+});
+
+test("R001の自由記述だけが変更された回答ではAIを利用できない", () => {
+  const responses = sampleResponses().map((response) =>
+    response.responseId === "R001" ? { ...response, comment: "内容を変更しました。" } : response,
+  );
+  const result = getMockAiAvailability({ kind: "bundled-sample" }, fixture, responses);
+  assert.equal(result.available, false);
+});
+
+test("評価値が1項目だけ変更された回答ではAIを利用できない", () => {
+  const responses = sampleResponses().map((response) =>
+    response.responseId === "R001" ? { ...response, workEnvironment: 5 as const } : response,
+  );
+  const result = getMockAiAvailability({ kind: "bundled-sample" }, fixture, responses);
+  assert.equal(result.available, false);
+});
+
+test("回答の削除または追加がある場合はAIを利用できない", () => {
+  const responses = sampleResponses();
+  const deleted = getMockAiAvailability({ kind: "bundled-sample" }, fixture, responses.slice(1));
+  const added = getMockAiAvailability(
+    { kind: "bundled-sample" },
+    fixture,
+    [...responses, { ...responses[0], responseId: "R004" }],
+  );
+  assert.equal(deleted.available, false);
+  assert.equal(added.available, false);
+});
+
+test("回答IDが変更された場合はAIを利用できない", () => {
+  const responses = sampleResponses().map((response) =>
+    response.responseId === "R001" ? { ...response, responseId: "R010" } : response,
+  );
+  const result = getMockAiAvailability({ kind: "bundled-sample" }, fixture, responses);
+  assert.equal(result.available, false);
 });
 
 test("サンプル由来でも不正な分析は正常な結果として利用できない", () => {
