@@ -16,6 +16,11 @@ import {
   INITIAL_SURVEY_WORKFLOW_STATE,
   surveyWorkflowReducer,
 } from "@/lib/survey/workflow";
+import {
+  getDemoMode,
+  LOCAL_MODE_NOTICE,
+  PUBLIC_DEMO_NOTICE,
+} from "@/lib/survey/demo-mode";
 
 const RATING_LABELS: Record<SurveyRatingField, string> = {
   workEnvironment: "働きやすさ",
@@ -23,6 +28,8 @@ const RATING_LABELS: Record<SurveyRatingField, string> = {
   informationSharing: "情報共有",
   intentionToStay: "継続意向",
 };
+
+const demoMode = getDemoMode(process.env.NODE_ENV);
 
 export default function Home() {
   const [state, dispatch] = useReducer(surveyWorkflowReducer, INITIAL_SURVEY_WORKFLOW_STATE);
@@ -45,6 +52,7 @@ export default function Home() {
   }
 
   async function loadUpload(event: ChangeEvent<HTMLInputElement>) {
+    if (demoMode !== "local") return;
     const file = event.currentTarget.files?.[0];
     event.currentTarget.value = "";
     if (!file) return;
@@ -97,7 +105,7 @@ export default function Home() {
       <section className="mb-8 rounded-3xl bg-gradient-to-br from-blue-50 via-white to-emerald-50 px-6 py-7 sm:px-9 sm:py-9">
         <p className="mb-2 text-sm font-semibold text-blue-800">ローカルで安全に集計</p>
         <h2 className="max-w-2xl text-2xl font-bold leading-snug text-slate-900 sm:text-3xl">CSVを読み込んで、職場の傾向を見てみましょう</h2>
-        <p className="mt-3 max-w-2xl text-base leading-7 text-slate-700">選択したファイルはこのブラウザ内で処理します。アプリからサーバーへ送信・保存しません。</p>
+        <p className="mt-3 max-w-2xl text-base leading-7 text-slate-700">{demoMode === "public" ? PUBLIC_DEMO_NOTICE : LOCAL_MODE_NOTICE}</p>
       </section>
 
       <section aria-labelledby="load-title" className="mb-6 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-7">
@@ -105,19 +113,19 @@ export default function Home() {
           <span className="flex size-9 items-center justify-center rounded-full bg-blue-100 font-bold text-blue-800">1</span>
           <div>
             <h2 id="load-title" className="text-lg font-bold text-slate-900">データを読み込む</h2>
-            <p className="text-sm text-slate-600">同梱サンプル、またはお手元のCSVを選べます。</p>
+            <p className="text-sm text-slate-600">{demoMode === "public" ? "同梱の架空サンプルを読み込んで、主な機能を確認できます。" : "同梱の架空サンプル、またはローカル確認用CSVを選べます。"}</p>
           </div>
         </div>
         <div className="flex flex-col gap-3 sm:flex-row">
           <button type="button" onClick={loadSample} className="min-h-12 rounded-xl bg-blue-700 px-5 text-base font-semibold text-white hover:bg-blue-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-700">
             サンプルで試す
           </button>
-          <label className="flex min-h-12 cursor-pointer items-center justify-center rounded-xl border border-emerald-700 bg-white px-5 text-base font-semibold text-emerald-800 hover:bg-emerald-50 focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-emerald-700">
-            CSVを選択
-            <input className="sr-only" type="file" accept=".csv,text/csv" aria-label="集計するCSVファイルを選択" onChange={loadUpload} />
-          </label>
+          {demoMode === "local" && <label className="flex min-h-12 cursor-pointer items-center justify-center rounded-xl border border-emerald-700 bg-white px-5 text-base font-semibold text-emerald-800 hover:bg-emerald-50 focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-emerald-700">
+            ローカルCSVを選択
+            <input className="sr-only" type="file" accept=".csv,text/csv" aria-label="ローカルで集計するCSVファイルを選択" onChange={loadUpload} />
+          </label>}
         </div>
-        <p className="mt-3 text-sm leading-6 text-slate-600">UTF-8形式、2 MiB以下。見出しは「回答ID、働きやすさ、相談しやすさ、情報共有、継続意向、自由記述」です。</p>
+        {demoMode === "local" && <p className="mt-3 text-sm leading-6 text-slate-600">UTF-8形式、2 MiB以下。見出しは「回答ID、働きやすさ、相談しやすさ、情報共有、継続意向、自由記述」です。アプリからサーバーへ送信・保存しません。</p>}
         <div className="mt-4" aria-live="polite" aria-atomic="true">
           {state.status === "idle" && <p className="text-base text-slate-600">まだデータを読み込んでいません。</p>}
           {state.status === "loading" && <p className="text-base font-medium text-blue-800">{state.source === "bundled-sample" ? "サンプル" : "CSV"}を読み込んでいます…</p>}
