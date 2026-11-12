@@ -18,3 +18,83 @@ body {
   font-family: "Noto Sans JP", "Hiragino Kaku Gothic ProN", "Yu Gothic", Meiryo, sans-serif;
   font-size: 16px;
 }
+
+.print-copy {
+  display: none;
+}
+
+@page {
+  size: A4 portrait;
+  margin: 16mm;
+}
+
+@media print {
+  html,
+  body {
+    background: #fff !important;
+    color: #111827 !important;
+    font-size: 11pt;
+  }
+
+  body * {
+    visibility: hidden !important;
+  }
+
+  .report-sheet,
+  .report-sheet * {
+    visibility: visible !important;
+  }
+
+  .report-sheet {
+    position: absolute;
+    inset: 0 auto auto 0;
+    width: 100%;
+    max-width: none;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    box-shadow: none;
+  }
+
+  .no-print,
+  input,
+  textarea {
+    display: none !important;
+  }
+
+  .print-copy {
+    display: block !important;
+    visibility: visible !important;
+  }
+
+  .report-heading {
+    margin-bottom: 8mm;
+  }
+
+  .report-summary {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
+
+  .report-summary,
+  .report-evidence,
+  blockquote {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .report-section h2,
+  .report-evidence h3 {
+    break-after: avoid;
+    page-break-after: avoid;
+  }
+
+  .report-evidence {
+    border-color: #9ca3af !important;
+    background: #fff !important;
+  }
+
+  a {
+    color: #111827 !important;
+    text-decoration: none;
+  }
+}
