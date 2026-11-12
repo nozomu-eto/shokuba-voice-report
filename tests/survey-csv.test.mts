@@ -109,3 +109,15 @@ test("2 MiBを超える入力を解析前に拒否する", () => {
   assert.equal(result.success, false);
   if (!result.success) assert.equal(result.errors[0].code, "too_large");
 });
+
+test("サイズ上限ちょうどの有効なCSVを受け入れる", () => {
+  const prefix = `${SURVEY_CSV_HEADERS.join(",")}\nR001,4,2,3,4,`;
+  const suffix = "\n";
+  const commentBytes = MAX_SURVEY_CSV_BYTES - new TextEncoder().encode(prefix + suffix).byteLength;
+  const csv = `${prefix}${"x".repeat(commentBytes)}${suffix}`;
+
+  assert.equal(new TextEncoder().encode(csv).byteLength, MAX_SURVEY_CSV_BYTES);
+  const result = parseSurveyCsv(csv);
+  assert.equal(result.success, true);
+  if (result.success) assert.equal(result.responses.length, 1);
+});

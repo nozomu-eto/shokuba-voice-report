@@ -90,7 +90,7 @@ export default function Home() {
       <section className="mb-8 rounded-3xl bg-gradient-to-br from-blue-50 via-white to-emerald-50 px-6 py-7 sm:px-9 sm:py-9">
         <p className="mb-2 text-sm font-semibold text-blue-800">ローカルで安全に集計</p>
         <h2 className="max-w-2xl text-2xl font-bold leading-snug text-slate-900 sm:text-3xl">CSVを読み込んで、職場の傾向を見てみましょう</h2>
-        <p className="mt-3 max-w-2xl text-base leading-7 text-slate-700">ファイルはこのブラウザ内で処理します。外部への送信や保存は行いません。</p>
+        <p className="mt-3 max-w-2xl text-base leading-7 text-slate-700">選択したファイルはこのブラウザ内で処理します。アプリからサーバーへ送信・保存しません。</p>
       </section>
 
       <section aria-labelledby="load-title" className="mb-6 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-7">
@@ -138,6 +138,7 @@ export default function Home() {
           </div>
           {ai?.available ? <div>
             <p className="mb-3 inline-flex min-h-9 items-center rounded-full bg-amber-100 px-3 text-sm font-bold text-amber-950">{ai.analysis.label}</p>
+            <p className="mb-3 text-sm leading-6 text-slate-600">この画面でAI推論は実行していません。事前生成の参考例であり、内容の正確性は保証されません。</p>
             <p className="mb-4 text-base leading-7 text-slate-800">{ai.analysis.overall}</p>
             <ul className="space-y-3">{ai.analysis.themes.map((theme) => <li key={theme.theme} className="rounded-xl border border-slate-200 p-4">
               <h3 className="text-base font-bold text-slate-900">{theme.theme}</h3><p className="mt-1 text-base leading-6 text-slate-700">{theme.summary}</p>
@@ -150,7 +151,7 @@ export default function Home() {
           </div> : <p className="rounded-xl bg-slate-50 p-4 text-base leading-7 text-slate-700">{ai?.message ?? UPLOADED_AI_UNAVAILABLE_MESSAGE}</p>}
         </section>
       </>}
-      <footer className="mt-8 text-sm leading-6 text-slate-600">集計対象のCSVは端末内でのみ処理されます。サンプルAI分析は同梱の架空データに対する事前生成デモです。</footer>
+      <footer className="mt-8 text-sm leading-6 text-slate-600">集計対象のCSVは端末内でのみ処理されます。サンプルAI分析は同梱の架空データに対する事前生成デモで、内容の正確性を保証するものではありません。</footer>
     </main>
   );
 }

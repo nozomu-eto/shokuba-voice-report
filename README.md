@@ -1,36 +1,80 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 職場の声レポート
 
-## Getting Started
+中小企業などの人事担当者が、従業員アンケートCSVの数値を確認し、自由記述の傾向を根拠と一緒に読むためのローカルMVPです。M1では架空のサンプルデータを使い、CSV読み込みから集計・根拠コメント確認までを一画面で試せます。
 
-First, run the development server:
+## 実装済み（M1）
+
+- 同梱の架空CSVをワンクリックで読み込み、回答件数と4項目の平均を表示
+- UTF-8 CSVをブラウザ内で検証し、列不足・重複ID・不正な評価値などを日本語で案内
+- 同梱サンプルに限って、静的なデモ分析と根拠回答ID・元コメントを表示
+- ユーザーが選んだCSVはブラウザ内で読み込み、決定論的な数値集計のみ表示
+
+## 未実装
+
+- アップロードCSVのAI分析、現在のアプリからのBedrock推論
+- 報告書の編集、印刷・PDF出力、データ保存、認証、クラウド公開
+- 実データを使った検証や本番運用向けの監視
+
+## 技術スタック
+
+- Next.js 16 App Router と React 19：画面とローカル開発サーバー
+- TypeScript：CSV検証・集計・表示の型境界
+- Tailwind CSS 4：レスポンシブな画面スタイル
+- Node.js組み込みテストランナー：追加のテスト依存を置かずに検証
+- pnpm：依存関係とスクリプトをロックファイルに沿って再現
+
+## 必要環境とセットアップ
+
+このリポジトリ全体の開発・テストにはNode.js 22.6.0以上が必要です。`pnpm test`がNode.jsの`--experimental-strip-types`を使うためです。Node.js v24.11.1で検証しており、このバージョンを推奨します。Next.js 16単体の最低要件はNode.js 20.9.0ですが、それだけではこのリポジトリのテストを実行できません。パッケージマネージャーはpnpm 12.9.1を使用します。
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
+pnpm install --frozen-lockfile
 pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+テスト・型チェック・lint・本番ビルドは、依存関係のインストール後に「開発者向けコマンド」の各コマンドを実行してください。
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+ブラウザで <http://localhost:3000> を開き、「サンプルで試す」を押すと、同梱データで画面を確認できます。
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## CSV形式
 
-## Learn More
+暫定スキーマは6列です。列順は任意ですが、見出し名は一致させてください。
 
-To learn more about Next.js, take a look at the following resources:
+| 列 | 条件 |
+| --- | --- |
+| `回答ID` | 必須、空欄・重複不可 |
+| `働きやすさ` | 必須、1〜5の整数 |
+| `相談しやすさ` | 必須、1〜5の整数 |
+| `情報共有` | 必須、1〜5の整数 |
+| `継続意向` | 必須、1〜5の整数 |
+| `自由記述` | 列は必須、値は空欄可 |
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+UTF-8（BOM可）、CRLF/LF、引用符内のカンマ・改行・二重引用符に対応しています。ファイル上限は2 MiBです。仕様の詳細は [`docs/CSV_SCHEMA.md`](docs/CSV_SCHEMA.md)、架空のサンプルは [`fixtures/employee-survey-sample.csv`](fixtures/employee-survey-sample.csv) にあります。AIデモ用データは [`fixtures/ai-analysis-mock.json`](fixtures/ai-analysis-mock.json) です。
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+数値の件数・合計・平均はアプリの決定論的なTypeScript処理で計算します。平均値は内部では丸めずに保持し、画面表示時のみ小数第1位に整えます。
 
-## Deploy on Vercel
+## AIデモとプライバシー
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+「サンプルAI分析（事前生成・デモ用）」は、同梱の架空回答に対して事前に用意した静的データです。現在のアプリはBedrock推論を実行せず、AIの文章の正確性を保証しません。根拠IDから元コメントを確認し、参考情報として扱ってください。
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+ユーザーがアップロードしたCSVは、内容が同梱サンプルと同じでも静的AI分析の対象になりません。アップロード内容はアプリ内のブラウザメモリで検証・集計され、アプリによる外部送信や永続保存は行いません。共有端末では実在する従業員情報を使わず、匿名化・合成データを使用してください。ブラウザや端末自体の管理・保護は利用者の環境に依存します。
+
+## 開発者向けコマンド
+
+```bash
+pnpm exec tsc --noEmit
+pnpm lint
+pnpm test
+pnpm build
+```
+
+テストはCSVパースと入力異常、集計・丸め、サンプルAIの根拠検証と表示ガード、読み込み状態の競合を確認します。
+
+## 制約とロードマップ
+
+- **M1（現在）**：ローカルCSV、決定論的数値集計、架空サンプル限定の静的AIデモ。
+- **M2（計画）**：根拠を確認しながら編集できる報告書とブラウザ印刷/PDF保存（Issue #8、#9）。
+- **M3（計画）**：Bedrockサーバー連携の準備とAI出力の厳格な検証（Issue #10、#11）。実際のAWS APIや有料推論には別途明示承認が必要です。
+- **M4（計画）**：公開デモの安全性・アクセシビリティ確認。AWS Amplify公開は別途承認が得られるまで実施しません（Issue #12、#13）。
+
+CSVスキーマは暫定スターター仕様で、過去の正式仕様と照合済みではありません。認証・永続化・複数利用者対応もありません。本アプリを本番の従業員データ処理に使わないでください。
