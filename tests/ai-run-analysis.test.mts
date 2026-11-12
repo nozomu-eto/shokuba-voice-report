@@ -10,7 +10,7 @@ import { INITIAL_REPORT_DRAFT, updateReportDraft } from "../src/lib/survey/repor
 const configValues = {
   BEDROCK_ANALYSIS_ENABLED: "true",
   BEDROCK_LIVE_APPROVED: "true",
-  BEDROCK_MODEL_ID: "us.amazon.nova-lite-v1:0",
+  BEDROCK_MODEL_ID: "apac.amazon.nova-lite-v1:0",
   BEDROCK_REGION: "ap-northeast-1",
   BEDROCK_MAX_INPUT_CHARS: "12000",
   BEDROCK_MAX_OUTPUT_TOKENS: "1024",
@@ -55,7 +55,7 @@ test("injected fake adapter returns validated data without network calls", async
   try {
     const result = await runAiAnalysis(enabled, adapter(async (request) => {
       calls += 1;
-      assert.equal(request.modelId, "us.amazon.nova-lite-v1:0");
+      assert.equal(request.modelId, "apac.amazon.nova-lite-v1:0");
       assert.equal(request.region, "ap-northeast-1");
       assert.ok(request.prompt.includes("R002"));
       return validOutput;
@@ -84,6 +84,14 @@ test("timeout, access denial, malformed citations, empty result, and unexpected 
   assert.deepEqual(emptyThemes, { status: "failed", code: "invalid_output" });
   const unexpected = await runAiAnalysis(enabled, adapter(async () => { throw new Error("sensitive details must not escape"); }), BUNDLED_SAMPLE_RESPONSES);
   assert.deepEqual(unexpected, { status: "failed", code: "provider_error" });
+});
+
+test("non-string adapter results fail safely without exposing returned data", async () => {
+  for (const malformed of [undefined, null, { sensitive: "do not expose" }]) {
+    const result = await runAiAnalysis(enabled, adapter(async () => malformed as unknown as string), BUNDLED_SAMPLE_RESPONSES);
+    assert.deepEqual(result, { status: "failed", code: "invalid_output" });
+    assert.equal(JSON.stringify(result).includes("sensitive"), false);
+  }
 });
 
 test("input length limit stops before adapter invocation", async () => {

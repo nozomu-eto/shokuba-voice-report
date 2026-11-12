@@ -20,7 +20,7 @@ export type AiAnalysisResult =
   | { status: "unavailable" | "failed"; code: AiAnalysisFailureCode };
 
 type AdapterOutcome =
-  | { kind: "response"; text: string }
+  | { kind: "response"; value: unknown }
   | { kind: "error"; error: unknown }
   | { kind: "timeout" };
 
@@ -74,7 +74,7 @@ export async function runAiAnalysis(
       prompt,
       maxOutputTokens: configuration.options.maxOutputTokens,
     }, controller.signal))
-    .then((text) => ({ kind: "response", text }), (error: unknown) => ({ kind: "error", error }));
+    .then((value: unknown) => ({ kind: "response", value }), (error: unknown) => ({ kind: "error", error }));
   const timeoutPromise = new Promise<AdapterOutcome>((resolve) => {
     timeoutId = setTimeout(() => resolve({ kind: "timeout" }), configuration.options.timeoutMs);
   });
@@ -98,7 +98,8 @@ export async function runAiAnalysis(
     };
   }
 
-  const validation = validateAiAnalysisOutput(outcome.text, responses);
+  if (typeof outcome.value !== "string") return { status: "failed", code: "invalid_output" };
+  const validation = validateAiAnalysisOutput(outcome.value, responses);
   if (!validation.success) return { status: "failed", code: "invalid_output" };
   return { status: "success", analysis: validation.analysis };
 }

@@ -10,13 +10,15 @@ The runtime configuration parser is pure and takes an environment map so it can 
 | --- | --- | --- |
 | `BEDROCK_ANALYSIS_ENABLED` | `true` or `false`; default off | `false` |
 | `BEDROCK_LIVE_APPROVED` | `true` or `false`; default off | `false` |
-| `BEDROCK_MODEL_ID` | `us.amazon.nova-lite-v1:0` only | `us.amazon.nova-lite-v1:0` |
-| `BEDROCK_REGION` | `us-east-1`, `us-west-2`, or `ap-northeast-1` | `ap-northeast-1` |
+| `BEDROCK_MODEL_ID` | `amazon.nova-lite-v1:0`, `us.amazon.nova-lite-v1:0`, or `apac.amazon.nova-lite-v1:0`; only documented model/region pairs below | `apac.amazon.nova-lite-v1:0` |
+| `BEDROCK_REGION` | `us-east-1`, `us-west-2`, or `ap-northeast-1`; only documented model/region pairs below | `ap-northeast-1` |
 | `BEDROCK_MAX_INPUT_CHARS` | 1,000–12,000 integer | `12000` |
 | `BEDROCK_MAX_OUTPUT_TOKENS` | 128–2,048 integer | `1024` |
 | `BEDROCK_TIMEOUT_MS` | 500–15,000 integer | `10000` |
 
 Copy `.env.example` to a local ignored environment file only for local configuration experiments. It contains no credentials. Never commit `.env.local`, access keys, or session tokens. The app currently does not read this configuration from a request path or call Bedrock.
+
+The parser allows only these documented model ID and calling-region pairs: `amazon.nova-lite-v1:0` with `ap-northeast-1` (In-Region), `us.amazon.nova-lite-v1:0` with `us-east-1` or `us-west-2` (US Geo), and `apac.amazon.nova-lite-v1:0` with `ap-northeast-1` (APAC Geo). Other combinations fail closed. The APAC profile can route processing outside Japan, including to Seoul, Osaka, Mumbai, Singapore, or Sydney; selecting Tokyo as the calling region does not guarantee Japan-only processing. See the [official Nova Lite model card](https://docs.aws.amazon.com/bedrock/latest/userguide/model-card-amazon-nova-lite.html) for current regional availability and routing.
 
 Any eventual runtime should use a dedicated, least-privilege execution role separated from developer credentials and roles. Creating or changing that role requires separate explicit approval.
 
@@ -28,6 +30,6 @@ Every cited ID must exist in the supplied validated responses, may be used only 
 
 `runAiAnalysis` separates disabled, approval-required, invalid-configuration, adapter-unavailable, input-too-long, timeout, access-denied, invalid-output, and unexpected-provider failures. Failure values contain only a small code; they omit prompt text, response comments, credentials, and adapter exception messages. The service has no logger and does not write to CSV, metrics, or manual report state.
 
-Tests inject a local fake `BedrockConverseAdapter`; the fake returns strings or throws controlled errors and makes no network request. Run `pnpm test` to execute the full suite. No AWS SDK is installed, and no AWS API, CLI, Bedrock inference, or other external API was called for implementation or tests.
+Tests inject a local fake `BedrockConverseAdapter`; the fake returns strings or deliberately malformed values, or throws controlled errors, and makes no network request. Run `pnpm test` to execute the full suite. No AWS SDK is installed, and no AWS API, CLI, Bedrock inference, or other external API was called for implementation or tests.
 
 The validator checks output structure, bounds, citation existence, and source-comment correspondence only. It cannot establish that a theme or summary is semantically accurate. Any future model result must remain a suggestion for a person to compare with source comments and approve. The bundled static analysis remains restricted to the bundled sample, and uploaded CSV analysis or server submission remains unavailable.

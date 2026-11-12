@@ -1,5 +1,16 @@
-export const ALLOWED_BEDROCK_MODEL_IDS = ["us.amazon.nova-lite-v1:0"] as const;
+export const ALLOWED_BEDROCK_MODEL_IDS = [
+  "amazon.nova-lite-v1:0",
+  "us.amazon.nova-lite-v1:0",
+  "apac.amazon.nova-lite-v1:0",
+] as const;
 export const ALLOWED_BEDROCK_REGIONS = ["us-east-1", "us-west-2", "ap-northeast-1"] as const;
+
+const ALLOWED_MODEL_REGION_PAIRS = [
+  { modelId: "amazon.nova-lite-v1:0", region: "ap-northeast-1" },
+  { modelId: "us.amazon.nova-lite-v1:0", region: "us-east-1" },
+  { modelId: "us.amazon.nova-lite-v1:0", region: "us-west-2" },
+  { modelId: "apac.amazon.nova-lite-v1:0", region: "ap-northeast-1" },
+] as const;
 
 export type BedrockModelId = (typeof ALLOWED_BEDROCK_MODEL_IDS)[number];
 export type BedrockRegion = (typeof ALLOWED_BEDROCK_REGIONS)[number];
@@ -53,8 +64,11 @@ export function readBedrockConfiguration(env: BedrockEnvironment): BedrockConfig
   const maxOutputTokens = boundedInteger(env.BEDROCK_MAX_OUTPUT_TOKENS, LIMITS.maxOutputTokens);
   const timeoutMs = boundedInteger(env.BEDROCK_TIMEOUT_MS, LIMITS.timeoutMs);
 
+  const supportedPair = ALLOWED_MODEL_REGION_PAIRS.some(
+    (pair) => pair.modelId === modelId && pair.region === region,
+  );
   if (
-    modelId === undefined || region === undefined ||
+    modelId === undefined || region === undefined || !supportedPair ||
     maxInputChars === null || maxOutputTokens === null || timeoutMs === null
   ) {
     return { status: "invalid", reason: "invalid_configuration" };

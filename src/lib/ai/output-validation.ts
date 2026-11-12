@@ -58,9 +58,10 @@ function parseWholeJsonDocument(text: string): unknown {
  * from the supplied, already-validated responses. This cannot assess semantic truth.
  */
 export function validateAiAnalysisOutput(
-  text: string,
+  text: unknown,
   responses: readonly SurveyResponse[],
 ): AiOutputValidation {
+  if (typeof text !== "string") return { success: false, issues: ["invalid_text"] };
   if (text.length > AI_OUTPUT_LIMITS.totalChars) {
     return { success: false, issues: ["invalid_text"] };
   }
